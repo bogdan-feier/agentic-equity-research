@@ -1,0 +1,9 @@
+langgraph
+langchain
+langchain-core
+langchain-google-genai
+langchain-tavily
+tavily-python
+yfinance
+python-dotenv
+rich
