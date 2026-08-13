@@ -2,3 +2,8 @@
 .venv/
 __pycache__/
 outputs/
+*.md
+!README.md
+data/
+*.pdf
+chroma_db/
