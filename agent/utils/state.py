@@ -1,4 +1,4 @@
-from typing import TypedDict, Annotated, List, Dict, Any
+from typing import TypedDict, Annotated, List, Dict, Any, Optional
 from langgraph.graph.message import add_messages
 from langchain_core.messages import BaseMessage
 
@@ -21,4 +21,6 @@ class AgentState(TypedDict):
     memo: str
 
     # Feedback from the critique agent 
-    critique_feedback: str
+    critic_feedback: Optional[str]
+    review_status: Optional[str]
+    revision_count: int
