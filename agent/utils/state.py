@@ -24,3 +24,5 @@ class AgentState(TypedDict):
     critic_feedback: Optional[str]
     review_status: Optional[str]
     revision_count: int
+
+    pdf_path = Optional[str]

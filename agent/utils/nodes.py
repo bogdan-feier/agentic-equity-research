@@ -1,4 +1,11 @@
+import os
 import json
+import markdown
+import matplotlib
+matplotlib.use('Agg')
+import yfinance as yf
+from weasyprint import HTML
+import matplotlib.pyplot as plt
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
@@ -171,3 +178,86 @@ def critic_node(state: AgentState) -> dict:
         "critic_feedback": review.get("feedback", ""),
         "revision_count": revision_count + 1
     }
+
+
+def export_node(state: AgentState) -> dict:
+    """
+    Generates a financial chart, appends it to the memo and exports everything to a PDF.
+    """
+    ticker = state["ticker"]
+    raw_memo = state.get("memo", "")
+
+    if isinstance(raw_memo, list) and len(raw_memo) > 0:
+        latest = raw_memo[-1]
+        if isinstance(latest, dict):
+            memo = latest.get("text", str(latest))
+        else:
+            memo = str(latest)
+    elif isinstance(raw_memo, dict):
+        memo = raw_memo.get("text", str(raw_memo))
+    else:
+        memo = str(raw_memo)
+
+    print(f"Generating 6-month price chart for {ticker}...")
+    os.makedirs("outputs", exist_ok=True)
+
+    stock = yf.Ticker(ticker)
+    hist = stock.history(period="6mo")
+
+    chart_filename = f"{ticker}_chart.png"
+    chart_path = os.path.join("outputs", chart_filename)
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(hist.index, hist['Close'], color='#007AFF', linewidth=2)
+    plt.title(f"{ticker} - 6 Month Price History", fontsize=14, fontweight='bold')
+    plt.xlabel("Date")
+    plt.ylabel("Price (USD)")
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.savefig(chart_path)
+    plt.close()
+
+    memo_with_chart = memo + f"\n\n## 6-Month Price Performance\n\n<img src='{chart_filename}' width='100%'>"
+
+    html_content = markdown.markdown(memo_with_chart, extensions=['tables'])
+
+    styled_html = f"""
+    <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{ font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; padding: 40px; line-height: 1.6; }}
+                h1, h2, h3 {{ color: #111; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px; }}
+                table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+                th, td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
+                th {{ background-color: #f8f9fa; font-weight: bold; }}
+                
+                img {{ 
+                    max-width: 100%; 
+                    height: auto; 
+                    display: block;
+                    border-radius: 8px; 
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+                    margin-top: 20px; 
+                }}
+            </style>
+        </head>
+        <body>
+            {html_content}
+        </body>
+    </html>
+    """
+
+    html_path = os.path.join("outputs", f"{ticker}_report.html")
+    pdf_path = os.path.join("outputs", f"{ticker}_Investment_Memo.pdf")
+
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(styled_html)
+
+    try:
+        HTML(string=styled_html, base_url=os.path.abspath("outputs")).write_pdf(pdf_path)
+        print(f"PDF successfully generated at: {pdf_path}")
+    except Exception as e:
+        print(f"PDF Generation failed: {e}")
+
+    return {"pdf_path": pdf_path}

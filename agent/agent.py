@@ -1,7 +1,7 @@
 import os
 from langgraph.graph import StateGraph, START, END
 from agent.utils.state import AgentState
-from agent.utils.nodes import planner_node, data_fetcher_node, analysis_node, draft_report_node, critic_node
+from agent.utils.nodes import planner_node, data_fetcher_node, analysis_node, draft_report_node, critic_node, export_node
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -20,8 +20,8 @@ def should_continue(state: AgentState) -> str:
         print(f"\n Critic node requested revision (Attempt {revision_count}/{MAX_REVISIONS}). Re-drafting...")
         return "draft_report_node"
 
-    print("\n Critic approved the memo or max revisions reached! Finalizing report...")
-    return END
+    print("\nCritic approved the memo or max revisions reached! Generating Financial Charts & PDF...")
+    return "export_node"
 
 def build_graph():
     workflow = StateGraph(AgentState)
@@ -31,6 +31,7 @@ def build_graph():
     workflow.add_node("analysis_node", analysis_node)
     workflow.add_node("draft_report_node", draft_report_node)
     workflow.add_node("critic_node", critic_node)
+    workflow.add_node("export_node", export_node)
 
     workflow.add_edge(START, "planner_node")
     workflow.add_edge("planner_node", "data_fetcher_node")
@@ -43,9 +44,11 @@ def build_graph():
         should_continue,
         {
             "draft_report_node": "draft_report_node",
-            END: END
+            "export_node": "export_node"
         }
     )
+
+    workflow.add_edge("export_node", END)
 
     return workflow.compile()
 
@@ -71,6 +74,8 @@ if __name__ == "__main__":
         memo_text = raw_memo.get("text", str(raw_memo))
     else:
         memo_text = str(raw_memo)
+
+    os.makedirs("outputs", exist_ok=True)
 
     output_filename = f"outputs/{initial_state['ticker']}_Investment_Memo.md"
     with open(output_filename, "w", encoding="utf-8") as f:
