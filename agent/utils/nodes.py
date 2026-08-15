@@ -27,45 +27,67 @@ def planner_node(state: AgentState) -> dict:
     User Question: {user_query}
     
     Determine what data is required to answer this question. 
-    Return a JSON object with a 'required_data' list containing any of: ["stock_info", "recent_news", "search_sec_filings"].
-    Example: {{"required_data": ["stock_info", "recent_news"]}}
+    CRITICAL RULE: Be as restrictive as possible. ONLY select a tool if it is absolutely necessary to answer the user's specific query. Do not select tools "just in case".
+    
+    Available tools:
+    - "stock_info": Use ONLY if the user asks about current price, market cap or PE ratio.
+    - "recent_news": Use ONLY if the user asks about recent events, today's movement or news.
+    - "search_sec_filings": Use ONLY if the user asks about risks, 10-K, SEC or deep fundamental business models.
+
+    Return a pure JSON object with a 'required_data' list.
+    Example: {{"required_data": ["search_sec_filings"]}}
     """
 
-    response = llm.invoke([SystemMessage(content="Output pure JSON only."), HumanMessage(content=prompt)])
+    response = llm.invoke([SystemMessage(content="Output pure JSON only. No markdown formatting. No conversational text."), HumanMessage(content=prompt)])
+
+    raw_content = response.content
+
+    if isinstance(raw_content, list) and len(raw_content) > 0:
+        if isinstance(raw_content[0], dict):
+            text_content = raw_content[0].get("text", str(raw_content[0]))
+        else:
+            text_content = str(raw_content[0])
+    elif isinstance(raw_content, dict):
+        text_content = raw_content.get("text", str(raw_content))
+    else:
+        text_content = str(raw_content)
 
     try:
-        clean_json = response.content.strip().replace("```json", "").replace("```", "")
+        clean_json = text_content.strip().replace("```json", "").replace("```", "")
         plan = json.loads(clean_json)
-    except Exception:
+    except Exception as e:
+        print(f"\nPlanner JSON parsing failed ({e}). Defaulting to all tools.")
         plan = {"required_data": ["stock_info", "recent_news", "search_sec_filings"]}
 
     return {"plan": plan}
 
 
-def data_fetcher_node(state: AgentState) -> dict:
+def fetch_stock_node(state: AgentState) -> dict:
     """
-    Executes the tools specified by the Planner node and stores raw results in state['raw_data']
+    Fetches stock data independently.
     """
-    ticker = state["ticker"]
-    user_query = state["user_query"]
-    plan = state.get("plan", {}).get("required_data", ["stock_info", "recent_news", "search_sec_filings"])
+    print(f"Fetching stock data for {state['ticker']}...")
+    return {"stock_data": get_stock_info.invoke({"ticker": state["ticker"]})}
 
-    raw_data = {}
 
-    if "stock_info" in plan:
-        raw_data["stock_info"] = get_stock_info.invoke({"ticker": ticker})
+def fetch_news_node(state: AgentState) -> dict:
+    """
+    Fetches news data independently.
+    """
+    print(f"Fetching news for {state['ticker']}...")
+    return {"news_data": search_news.invoke({"ticker": state["ticker"]})}
 
-    if "recent_news" in plan:
-        raw_data["recent_news"] = search_news.invoke({"ticker": ticker})
 
-    if "search_sec_filings" in plan:
-        raw_data["search_sec_filings"] = search_sec_filings.invoke({
-            "ticker": ticker,
-            "query": user_query
-        })
-
-    return {"raw_data": raw_data}
-
+def fetch_sec_node(state: AgentState) -> dict:
+    """
+    Fetches SEC filings independently.
+    """
+    print(f"Fetching SEC filings for {state['ticker']}...")
+    return {"sec_data": search_sec_filings.invoke({
+        "ticker": state["ticker"],
+        "query": state["user_query"]
+    })}
+    
 
 def analysis_node(state: AgentState) -> dict:
     """
@@ -73,7 +95,13 @@ def analysis_node(state: AgentState) -> dict:
     to identify key financial highlights, bullish factors and bearish factors for the target ticker
     """
     ticker = state["ticker"]
-    raw_data = state["raw_data"]
+    raw_data = {
+        "stock_info": state.get("stock_data"),
+        "recent_news": state.get("news_data"),
+        "sec_filings": state.get("sec_data")
+    }
+
+    raw_data = {k: v for k, v in raw_data.items() if v is not None}
 
     prompt = f"""
     You are a Financial Analyst specializing in quantitative and qualitative analysis.
@@ -138,8 +166,14 @@ def critic_node(state: AgentState) -> dict:
     ticker = state["ticker"]
     user_query = state["user_query"]
     memo = state["memo"]
-    raw_data = state.get("raw_data", {})
     revision_count = state.get("revision_count", 0)
+    raw_data = {
+        "stock_info": state.get("stock_data"),
+        "recent_news": state.get("news_data"),
+        "sec_filings": state.get("sec_data")
+    }
+
+    raw_data = {k: v for k, v in raw_data.items() if v is not None}
 
     prompt = f"""
     You are a Senior Compliance Officer and Quality Control Analyst at an equity research firm.
@@ -165,7 +199,7 @@ def critic_node(state: AgentState) -> dict:
     {{"status": "NEEDS_REVISION", "feedback": "The report misses specific supply chain risk factors from the 10-K filing."}}
     """
 
-    response = llm.invoke([SystemMessage(content="Output pure JSON only."), HumanMessage(content=prompt)])
+    response = llm.invoke([SystemMessage(content="Output pure JSON only. No markdown formatting. No conversational text."), HumanMessage(content=prompt)])
 
     try:
         clean_json = response.content.strip().replace("```json", "").replace("```", "")
