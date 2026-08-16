@@ -2,6 +2,13 @@ import streamlit as st
 import requests
 import os
 
+PASSWORD = os.environ.get("APP_PASSWORD")
+
+user_password = st.text_input("Enter App Password", type="password")
+if user_password != PASSWORD:
+    st.warning("Please enter the correct password to use this application.")
+    st.stop()
+
 st.set_page_config(page_title="Agentic Equity Research", page_icon="📈", layout="wide")
 
 st.title("📈 Agentic Equity Research")
