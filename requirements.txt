@@ -16,6 +16,7 @@ langchain-chroma==1.1.0
 
 yfinance==1.5.2
 tavily-python==0.7.27
+langchain-tavily==0.2.18
 beautifulsoup4==4.15.0
 
 pandas==3.0.5
@@ -23,5 +24,6 @@ matplotlib==3.11.1
 
 weasyprint==69.0
 pypdf==6.15.0
+markdown==3.10.3
 
 python-dotenv==1.2.2
