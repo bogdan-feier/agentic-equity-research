@@ -23,7 +23,7 @@ if submit_btn:
         with st.spinner(f"Agents are currently researching {ticker}..."):
             try:
                 response = requests.post(
-                    "http://127.0.0.1:8000/research",
+                    "http://backend:8000/research",
                     json={"ticker": ticker, "query": query},
                     timeout=300
                 )
@@ -47,7 +47,7 @@ if st.session_state.research_data:
     chart_path = data.get("chart_path")
     if chart_path and os.path.exists(chart_path):
         st.subheader(f"📊 {current_ticker} Historical Performance")
-        st.image(chart_path, caption=f"{current_ticker} 6-Month Price & Trend Chart", use_container_width=True)
+        st.image(chart_path, caption=f"{current_ticker} 6-Month Price & Trend Chart", width="stretch")
     
     st.markdown("---")
     st.markdown(data.get("memo"))
