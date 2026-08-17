@@ -248,23 +248,35 @@ def export_node(state: AgentState) -> dict:
     print(f"Generating 6-month price chart for {ticker}...")
     os.makedirs("outputs", exist_ok=True)
 
-    stock = yf.Ticker(ticker)
-    hist = stock.history(period="6mo")
-
     chart_filename = f"{ticker}_chart.png"
     chart_path = os.path.join("outputs", chart_filename)
+    chart_generated = False
 
-    plt.figure(figsize=(10, 5))
-    plt.plot(hist.index, hist['Close'], color='#007AFF', linewidth=2)
-    plt.title(f"{ticker} - 6 Month Price History", fontsize=14, fontweight='bold')
-    plt.xlabel("Date")
-    plt.ylabel("Price (USD)")
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.tight_layout()
-    plt.savefig(chart_path)
-    plt.close()
+    try:
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period="6mo")
 
-    memo_with_chart = memo + f"\n\n## 6-Month Price Performance\n\n<img src='{chart_filename}' width='100%'>"
+        if not hist.empty:
+            plt.figure(figsize=(10, 5))
+            plt.plot(hist.index, hist['Close'], color='#007AFF', linewidth=2)
+            plt.title(f"{ticker} - 6 Month Price History", fontsize=14, fontweight='bold')
+            plt.xlabel("Date")
+            plt.ylabel("Price (USD)")
+            plt.grid(True, linestyle='--', alpha=0.5)
+            plt.tight_layout()
+            plt.savefig(chart_path)
+            plt.close()
+            chart_generated = True
+        else:
+            print(f"Yahoo Finance returned empty history for {ticker}. Skipping chart.")
+
+    except Exception as e:
+        print(f"Chart generation failed due to API error/rate limit: {e}")
+
+    if chart_generated:
+        memo_with_chart = memo + f"\n\n## 6-Month Price Performance\n\n<img src='{chart_filename}' width='100%'>"
+    else:
+        memo_with_chart = memo + f"\n\n## 6-Month Price Performance\n\n*A live price chart is currently unavailable due to data provider rate limits.*"
 
     html_content = markdown.markdown(memo_with_chart, extensions=['tables'])
 

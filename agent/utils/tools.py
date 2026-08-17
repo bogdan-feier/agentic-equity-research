@@ -23,6 +23,9 @@ def get_stock_info(ticker: str) -> dict:
         stock = yf.Ticker(ticker)
         info = stock.info
 
+        if not info:
+            raise ValueError("Too Many Requests. Rate limited.")
+
         essential_data = {
             "current_price": info.get("currentPrice", "N/A"),
             "market_cap": info.get("marketCap", "N/A"),
@@ -34,7 +37,16 @@ def get_stock_info(ticker: str) -> dict:
         return essential_data
 
     except Exception as e:
-        return {"error": f"Failed to fetch data for {ticker}. Error: {str(e)}"}
+        print(f"yfinance error for {ticker}: {e}")
+
+        return {
+            "current_price": "Unavailable (API Rate Limit)",
+            "market_cap": "Unavailable",
+            "pe_ratio": "Unavailable",
+            "52_week_high": "Unavailable",
+            "52_week_low": "Unavailable",
+            "business_summary": f"Live stock data for {ticker} is currently unavailable due to Yahoo Finance rate limits. Please state this in your report and base your financial analysis strictly on the fetched news data."
+        }
 
 
 @tool
