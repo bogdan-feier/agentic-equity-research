@@ -82,11 +82,24 @@ def fetch_sec_node(state: AgentState) -> dict:
     """
     Fetches SEC filings independently.
     """
-    print(f"Fetching SEC filings for {state['ticker']}...")
-    return {"sec_data": search_sec_filings.invoke({
-        "ticker": state["ticker"],
-        "query": state["user_query"]
-    })}
+    ticker = state['ticker']
+    print(f"Fetching SEC filings for {ticker}...")
+
+    try:
+        sec_data = search_sec_filings.invoke({
+            "ticker": ticker,
+            "query": state["user_query"]
+        })
+
+        if not sec_data:
+            sec_data = f"No SEC 10-K filing found for {ticker}. Please note this in your report and base your analysis strictly on news and historical price data."
+
+    except Exception as e:
+        print(f"SEC fetch failed for {ticker}: {e}")
+        sec_data = f"No SEC 10-K filing found for {ticker}. Please note this in your report and base your analysis strictly on news and historical price data."
+
+
+    return {"sec_data": sec_data}
     
 
 def analysis_node(state: AgentState) -> dict:
