@@ -18,7 +18,7 @@ if not st.session_state.authenticated:
         else:
             st.warning("Please enter the correct password to use this application.")
 
-        st.stop()
+    st.stop()
 
 st.title("📈 Agentic Equity Research")
 st.markdown("Enter a stock ticker and a specific research question to generate an AI-driven investment memo.")
