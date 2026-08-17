@@ -4,12 +4,21 @@ import os
 
 st.set_page_config(page_title="Agentic Equity Research", page_icon="📈", layout="wide")
 
-PASSWORD = os.environ.get("APP_PASSWORD")
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
-user_password = st.text_input("Enter App Password", type="password")
-if user_password != PASSWORD:
-    st.warning("Please enter the correct password to use this application.")
-    st.stop()
+if not st.session_state.authenticated:
+    PASSWORD = os.environ.get("APP_PASSWORD")
+    user_password = st.text_input("Enter App Password", type="password")
+
+    if user_password:
+        if user_password == PASSWORD:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.warning("Please enter the correct password to use this application.")
+
+        st.stop()
 
 st.title("📈 Agentic Equity Research")
 st.markdown("Enter a stock ticker and a specific research question to generate an AI-driven investment memo.")
