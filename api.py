@@ -1,7 +1,10 @@
 import os
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+import json
 from typing import Optional
+from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
+
 
 from agent.agent import build_graph
 
@@ -23,53 +26,70 @@ class ResearchResponse(BaseModel):
 
 
 @app.post("/research", response_model=ResearchResponse)
-async def generate_research(request: ResearchRequest):
-    try:
-        graph = build_graph()
-        ticker = request.ticker.upper().strip()
+def generate_research(request: ResearchRequest):
+    def event_generator():
+        try:
+            graph = build_graph()
+            ticker = request.ticker.upper().strip()
 
-        initial_state = {
-            "ticker": ticker,
-            "user_query": request.query.strip(),
-            "revision_count": 0
-        }
+            initial_state = {
+                "ticker": ticker,
+                "user_query": request.query.strip(),
+                "revision_count": 0
+            }
 
-        result = graph.invoke(initial_state)
+            final_state = dict(initial_state)
 
-        raw_memo = result.get("memo", "")
-        if isinstance(raw_memo, list) and len(raw_memo) > 0:
-            latest = raw_memo[-1]
-            if isinstance(latest, dict):
-                memo_text = latest.get("text", str(latest))
+            for chunk in graph.stream(initial_state):
+                for node_name, node_update in chunk.items():
+                    yield json.dumps({
+                        "type": "update",
+                        "step": node_name,
+                    }) + "\n"
+
+                    if isinstance(node_update, dict):
+                        final_state.update(node_update)
+
+            raw_memo = final_state.get("memo", "")
+            if isinstance(raw_memo, list) and len(raw_memo) > 0:
+                latest = raw_memo[-1]
+                if isinstance(latest, dict):
+                    memo_text = latest.get("text", str(latest))
+                else:
+                    memo_text = str(latest)
+            elif isinstance(raw_memo, dict):
+                memo_text = raw_memo.get("text", str(raw_memo))
             else:
-                memo_text = str(latest)
-        elif isinstance(raw_memo, dict):
-            memo_text = raw_memo.get("text", str(raw_memo))
-        else:
-            memo_text = str(raw_memo)
+                memo_text = str(raw_memo)
 
-        pdf_path = result.get("pdf_path")
+            pdf_path = final_state.get("pdf_path")
 
-        chart_path = result.get("chart_path")
-        if not chart_path:
-            for potential_path in [
-                f"outputs/{ticker}_price_chart.png",
-                f"outputs/{ticker}_chart.png",
-                "outputs/price_chart.png"
-            ]:
-                if os.path.exists(potential_path):
-                    chart_path = potential_path
-                    break
+            chart_path = final_state.get("chart_path")
+            if not chart_path:
+                for potential_path in [
+                    f"outputs/{ticker}_price_chart.png",
+                    f"outputs/{ticker}_chart.png",
+                    "outputs/price_chart.png"
+                ]:
+                    if os.path.exists(potential_path):
+                        chart_path = potential_path
+                        break
 
-        return ResearchResponse(
-            ticker=initial_state["ticker"],
-            memo=memo_text,
-            pdf_path=pdf_path,
-            chart_path=chart_path
-        )
+            yield json.dumps({
+                "type": "final",
+                "ticker": ticker,
+                "memo": memo_text,
+                "pdf_path": pdf_path,
+                "chart_path": chart_path
+            }) + "\n"
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        except Exception as e:
+            yield json.dumps({
+                "type": "error",
+                "detail": str(e)
+            }) + "\n"
+
+    return StreamingResponse(event_generator(), media_type="application/x-ndjson")
 
 
 @app.get("/health")
