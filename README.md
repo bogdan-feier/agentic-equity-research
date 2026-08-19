@@ -17,7 +17,7 @@
 
 ---
 
-## 🎯 What Is This?
+##  What Is This?
 
 **Agentic Equity Research** is an end-to-end, AI-driven investment analysis pipeline. A user submits a stock ticker and a research question through a **Streamlit** frontend. The **FastAPI** backend orchestrates a team of specialized LangGraph agents that autonomously **plan**, **fetch data**, **analyze**, **draft**, **critique** and **export** a professional investment memo - complete with a 6-month historical price chart and a downloadable PDF.
 
@@ -25,21 +25,21 @@ The agents don't just generate text. They reason about _what data is needed_, fe
 
 ---
 
-## ✨ Features
+##  Features
 
 | Feature | Description |
 | :--- | :--- |
-| 🤖 **Multi-Agent LangGraph Pipeline** | A stateful graph of 8 specialized nodes - Planner, 3 parallel Data Fetchers, Analyst, Drafter, Critic and Exporter - orchestrated by LangGraph with conditional routing. |
-| 🔄 **Real-Time Async Streaming** | The FastAPI backend streams `ndjson` events as each agent completes its task. The Streamlit UI renders live progress updates so you see the agents _thinking_. |
-| 📊 **Multi-Source Data Fusion** | Agents pull from **SEC 10-K filings** (local RAG via ChromaDB), **live market data** (yfinance) and **current news** (Tavily) - all in parallel. |
-| 🧠 **Intelligent Planning** | The Planner agent analyzes the user's query and selectively activates _only_ the data tools that are relevant, minimizing latency and API calls. |
-| ✅ **Built-in Quality Control** | A Critic agent reviews every draft against the raw source data, flagging unsupported claims. Up to 2 revision cycles ensure accuracy before export. |
-| 📄 **PDF & Chart Artifacts** | Final outputs are a professionally styled PDF investment memo and a 6-month price chart (`.png`), saved to a shared `./outputs` volume. |
-| 📦 **One-Command Docker Deploy** | A single `docker compose up --build` spins up both the backend and frontend with shared volumes. |
+|  **Multi-Agent LangGraph Pipeline** | A stateful graph of 8 specialized nodes - Planner, 3 parallel Data Fetchers, Analyst, Drafter, Critic and Exporter - orchestrated by LangGraph with conditional routing. |
+|  **Real-Time Async Streaming** | The FastAPI backend streams `ndjson` events as each agent completes its task. The Streamlit UI renders live progress updates so you see the agents _thinking_. |
+|  **Multi-Source Data Fusion** | Agents pull from **SEC 10-K filings** (local RAG via ChromaDB), **live market data** (yfinance) and **current news** (Tavily) - all in parallel. |
+|  **Intelligent Planning** | The Planner agent analyzes the user's query and selectively activates _only_ the data tools that are relevant, minimizing latency and API calls. |
+|  **Built-in Quality Control** | A Critic agent reviews every draft against the raw source data, flagging unsupported claims. Up to 2 revision cycles ensure accuracy before export. |
+|  **PDF & Chart Artifacts** | Final outputs are a professionally styled PDF investment memo and a 6-month price chart (`.png`), saved to a shared `./outputs` volume. |
+|  **One-Command Docker Deploy** | A single `docker compose up --build` spins up both the backend and frontend with shared volumes. |
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 The system is built as a **directed acyclic graph** (DAG) of LangGraph agent nodes. The Planner dynamically routes to only the required data-fetching nodes, which execute **in parallel**. The Critic introduces a conditional feedback loop for self-correction before final export.
 
@@ -83,7 +83,7 @@ flowchart TD
 
 ---
 
-## 🚀 Quick Start (Docker)
+##  Quick Start (Docker)
 
 ### Prerequisites
 
@@ -135,7 +135,7 @@ This spins up two containers:
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```
 agentic-equity-research/
@@ -160,7 +160,7 @@ agentic-equity-research/
 
 ---
 
-## 🗂️ Local Data & SEC Filing Ingestion
+##  Local Data & SEC Filing Ingestion
 
 The `data/` folder ships with sample **SEC 10-K annual reports** for 8 major companies, ready for local testing:
 
@@ -188,7 +188,7 @@ This chunks the PDF, generates embeddings via `gemini-embedding-001` and persist
 
 ---
 
-## 🛠️ Running Locally (Without Docker)
+##  Running Locally (Without Docker)
 
 ```bash
 # Create and activate a virtual environment
@@ -212,7 +212,7 @@ streamlit run app.py
 
 ---
 
-## ⚙️ Tech Stack
+##  Tech Stack
 
 | Layer | Technology | Purpose |
 | :--- | :--- | :--- |
@@ -229,7 +229,7 @@ streamlit run app.py
 
 ---
 
-## 📝 License
+##  License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
