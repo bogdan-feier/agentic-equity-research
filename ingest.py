@@ -68,9 +68,3 @@ if __name__ == "__main__":
         build_vector_store(sys.argv[1])
     else:
         print("Please provide a ticker symbol as an argument.")
-
-    """
-    tickers = ["JPM"]       # need to embed JPM 10-K but it has a too many chunks for my RPD API limit
-    for ticker in tickers:
-        build_vector_store(ticker)
-    """
