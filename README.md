@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">📈 Agentic Equity Research</h1>
+  <h1 align="center">Agentic Equity Research</h1>
   <p align="center">
     <strong>An autonomous, multi-agent investment research system powered by LangGraph and Gemini.</strong>
     <br />
@@ -45,16 +45,16 @@ The system is built as a **directed acyclic graph** (DAG) of LangGraph agent nod
 
 ```mermaid
 flowchart TD
-    A["🧑‍💻 User Input<br/><i>Ticker + Research Question</i>"]
-    B["🧠 Planner Agent<br/><i>Analyzes query, selects tools</i>"]
-    C["📈 Fetch Stock Data<br/><i>yfinance: price, P/E, market cap</i>"]
-    D["📰 Fetch News Data<br/><i>Tavily: latest financial headlines & news</i>"]
-    E["📑 Fetch SEC 10-K Data<br/><i>ChromaDB RAG: risk factors, financials</i>"]
-    F["🔬 Analysis Agent<br/><i>Synthesizes structured summary</i>"]
-    G["✍️ Drafter Agent<br/><i>Writes investment memo in Markdown</i>"]
-    H{"🔍 Critic Agent<br/><i>Compliance & QA review</i>"}
-    I["📄 Export Agent<br/><i>Generates PDF memo + price chart</i>"]
-    J["✅ Final Artifacts<br/><i>PDF Report & .png Chart</i>"]
+    A["User Input<br/><i>Ticker + Research Question</i>"]
+    B["Planner Agent<br/><i>Analyzes query, selects tools</i>"]
+    C["Fetch Stock Data<br/><i>yfinance: price, P/E, market cap</i>"]
+    D["Fetch News Data<br/><i>Tavily: latest financial headlines & news</i>"]
+    E["Fetch SEC 10-K Data<br/><i>ChromaDB RAG: risk factors, financials</i>"]
+    F["Analysis Agent<br/><i>Synthesizes structured summary</i>"]
+    G["Drafter Agent<br/><i>Writes investment memo in Markdown</i>"]
+    H{"Critic Agent<br/><i>Compliance & QA review</i>"}
+    I["Export Agent<br/><i>Generates PDF memo + price chart</i>"]
+    J["Final Artifacts<br/><i>PDF Report & .png Chart</i>"]
 
     A --> B
     B -->|"get_stock_info"| C
